@@ -1,0 +1,4 @@
+resolver: lts-15.14
+system-ghc: true
+compiler-check: newer-minor
+

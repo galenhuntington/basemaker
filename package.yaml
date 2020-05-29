@@ -1,0 +1,33 @@
+name: basemaker
+version: 0.2.0
+maintainer: Galen Huntington
+license: MIT
+
+default-extensions:
+- BlockArguments
+- DerivingStrategies
+- ScopedTypeVariables
+- RecordWildCards
+- PatternSynonyms
+
+executables:
+  basemaker:
+    main: aceofbase.hs
+
+dependencies:
+- base
+- bytestring
+- containers
+- transformers
+- tar
+- wreq
+- zlib
+- microlens
+- microlens-th
+- SHA
+- xdg-basedir
+- directory
+- filepath
+- process
+- optparse-applicative
+

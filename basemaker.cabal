@@ -1,0 +1,36 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: cdb43b42ce5df9a7f46f1f0b826cd49387850d685eed371fab492e2a5286bcbe
+
+name:           basemaker
+version:        0.2.0
+maintainer:     Galen Huntington
+license:        MIT
+build-type:     Simple
+
+executable basemaker
+  main-is: aceofbase.hs
+  other-modules:
+      Paths_basemaker
+  default-extensions: BlockArguments DerivingStrategies ScopedTypeVariables RecordWildCards PatternSynonyms
+  build-depends:
+      SHA
+    , base
+    , bytestring
+    , containers
+    , directory
+    , filepath
+    , microlens
+    , microlens-th
+    , optparse-applicative
+    , process
+    , tar
+    , transformers
+    , wreq
+    , xdg-basedir
+    , zlib
+  default-language: Haskell2010
