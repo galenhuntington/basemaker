@@ -4,12 +4,13 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: cdb43b42ce5df9a7f46f1f0b826cd49387850d685eed371fab492e2a5286bcbe
+-- hash: f7d06a6943ccec3e97649009f14f174cde9cf315015885e37811cbf76c8ae636
 
 name:           basemaker
 version:        0.2.0
 maintainer:     Galen Huntington
 license:        MIT
+license-file:   LICENSE
 build-type:     Simple
 
 executable basemaker

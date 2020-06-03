@@ -82,9 +82,9 @@ A derived project, [rerebase](https://github.com/nikita-volkov/rebase),
 re-exports modules from these packages with their original names.
 
 However, since the list of re-exports is fixed, while the modules
-provided in packages are always changing, some modules may be missing,
-with tricky workarounds needed to access them.  This problem prevented
-me from being able to use this approach.
+provided in packages can change, some modules may be missing, with
+tricky workarounds needed to access them.  This problem made this
+approach unworkable for me.
 
 
 ##  How to use
@@ -97,5 +97,7 @@ a `Prelude.hs` file in the tarball, which you can write yourself.
 The original `Prelude` is available as `Prelude.Base`.
 
 There is an option to use the package list and prelude from `rebase`.
+This is effectively the same as using `rerebase`, except that all
+original modules are guaranteed to be re-exported.
 
 
