@@ -190,12 +190,13 @@ inferSetFromRebase web verm = do
 
 --  Uses ghc (in path) to get built-in package versions & modules.
 --  Optional argument uses Stack resolver to find ghc.
-inferFromGhc :: Maybe String -> Inferrer ()
+inferFromGhc :: Maybe (Maybe String) -> Inferrer ()
 inferFromGhc resm = do
    let run = maybe
          do readProcess "ghc" ["--print-libdir"]
-         do \r -> readProcess "stack"
-                     ["ghc", "--resolver", r, "--", "--print-libdir"]
+         do \rm -> readProcess "stack" $
+                  ["ghc"] ++ maybe [] (\r -> ["--resolver", r]) rm
+                          ++ ["--", "--print-libdir"]
          resm
    whenIO ((</> "package.conf.d") . head . lines <$> run "") \path -> do
    log_ $ "Reading " <> path
@@ -231,8 +232,11 @@ inferFromHackage web = do
          modify $ Map.insert pkg $ Just $ PkInfo ver $ Just mods
 
 --  Uses a Stack snapshot to get versions.
-inferFromStack :: WebS.Session -> String -> Inferrer ()
-inferFromStack web resolver = do
+inferFromStack :: WebS.Session -> Maybe String -> Inferrer ()
+inferFromStack web resolverm = do
+   resolver <- liftIO $ flip (flip maybe pure) resolverm $
+      head <$> drop 1 <$> dropWhile (/="resolver:")
+           <$> words <$> readFile "stack.yaml"
    conf <- liftIO $ tryCache ("stack-" <> resolver <> ".conf") do
       getUrl web $ "https://www.stackage.org/snapshot/"
                   ++ resolver ++ "/cabal.config?global=true"
@@ -283,9 +287,11 @@ main = do
          <*> optional (strOption (
             long "prelude" <> metavar "FILE"
                <> help "Prelude file to bundle. (default: \"./Prelude.hs\")"))
-         <*> optional (strOption (
-            short 's' <> long "stackage" <> metavar "RESOLVER"
-               <> help "Use Stackage RESOLVER (e.g., lts-15.14) to infer versions."))
+         <*> optional (
+            flag' Nothing (short 's' <> help "Use local Stack config to infer versions.")
+            <|> fmap Just (strOption (
+               long "stackage" <> metavar "RESOLVER"
+                  <> help "Use RESOLVER (e.g., lts-15.15) to infer versions.")))
          <*> optional (verParser <$> strOption (
             short 'r' <> long "rebase" <> metavar "VERSION"
                <> help "Use package list and/or Prelude from Rebase; \
