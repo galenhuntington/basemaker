@@ -14,6 +14,8 @@ import Control.Monad.Trans.State.Strict
 import Data.Functor
 import Debug.Trace
 import Control.Category
+import System.IO
+import System.IO.Error
 
 import qualified Network.Wreq as Web
 import qualified Network.Wreq.Session as WebS
@@ -333,7 +335,14 @@ main = do
    let tgz = compressWith defaultCompressParams { compressLevel = bestCompression }
          $ Tar.write
          [tarEntry "mybase.cabal" myCabal, tarEntry "Prelude.hs" myPrelude]
-   log_ $ "Generating " ++ target
-   BL.writeFile target tgz
+   let save = do
+         log_ $ "Generating " ++ target
+         BL.writeFile target tgz
+   handleJust (\e -> guard (isDoesNotExistError e) *> pure ()) (const save) do
+      eq <- withFile target ReadMode \h ->
+         BL.hGetContents h <&> (/= tgz) >>= evaluate
+      if eq
+         then putStrLn "Overwriting old tarball." *> save
+         else putStrLn "Tarball already exists and is up to date."
    putStrLn $ "sha256: " <> show (sha256 tgz)
 
