@@ -189,16 +189,16 @@ inferSetFromRebase web verm = do
          modify $ Map.insert d Nothing
 
 --  Uses ghc (in path) to get built-in package versions & modules.
---  Optional argument uses Stack resolver to find ghc.
+--  Optional argument uses Stack to find built-in packages.
 inferFromGhc :: Maybe (Maybe String) -> Inferrer ()
 inferFromGhc resm = do
+   let getPath ex args = takeWhile (/='\n') <$> readProcess ex args ""
    let run = maybe
-         do readProcess "ghc" ["--print-libdir"]
-         do \rm -> readProcess "stack" $
-                  ["ghc"] ++ maybe [] (\r -> ["--resolver", r]) rm
-                          ++ ["--", "--print-libdir"]
+         do (</> "package.conf.d") <$> getPath "ghc" ["--print-libdir"]
+         do \rm -> getPath "stack" $ "path"
+               : maybe [] (\r -> ["--resolver", r]) rm ++ ["--global-pkg-db"]
          resm
-   whenIO ((</> "package.conf.d") . head . lines <$> run "") \path -> do
+   whenIO run \path -> do
    log_ $ "Reading " <> path
    files <- liftIO $ listDirectory path
    let list = [ (Package pkg ver, file)

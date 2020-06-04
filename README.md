@@ -81,10 +81,10 @@ So, for now I’m using it as a starting point.
 A derived project, [rerebase](https://github.com/nikita-volkov/rebase),
 re-exports modules from these packages with their original names.
 
-However, since the list of re-exports is fixed, while the modules
-provided in packages can change, some modules may be missing, with
-tricky workarounds needed to access them.  This problem made this
-approach unworkable for me.
+However, since the list of re-exports is fixed (or at least lags),
+while the modules provided in packages can change, some modules may
+be missing, with workarounds needed to access them.  This problem
+made this approach unworkable for me.
 
 
 ##  How to use
