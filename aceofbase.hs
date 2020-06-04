@@ -177,12 +177,12 @@ inferInitialSet strm = maybe (whenIO (readFile "pkgs.txt")) (&) strm $
 inferSetFromRebase :: WebS.Session -> Maybe Version -> Inferrer ()
 inferSetFromRebase web verm = do
    deps <- liftIO
-            $ map BL.unpack
-            . filter (maybe False (isAlpha . fst) . BL.uncons)
-            . takeWhile (not . (':' `BL.elem`))
-            . tail . dropWhile (/= "build-depends:")
-            . concatMap BL.words . BL.lines
-            <$> getCabalFile web "rebase" verm
+      $ map BL.unpack
+      . filter (maybe False (isAlpha . fst) . BL.uncons)
+      . takeWhile (not . (':' `BL.elem`))
+      . tail . dropWhile (/= "build-depends:")
+      . concatMap BL.words . BL.lines
+      <$> getCabalFile web "rebase" verm
    st <- get
    for_ deps \d ->
       when (d `Map.notMember` st) do
@@ -193,12 +193,12 @@ inferSetFromRebase web verm = do
 inferFromGhc :: Maybe (Maybe String) -> Inferrer ()
 inferFromGhc resm = do
    let getPath ex args = takeWhile (/='\n') <$> readProcess ex args ""
-   let run = maybe
-         do (</> "package.conf.d") <$> getPath "ghc" ["--print-libdir"]
-         do \rm -> getPath "stack" $ "path"
-               : maybe [] (\r -> ["--resolver", r]) rm ++ ["--global-pkg-db"]
-         resm
-   whenIO run \path -> do
+   whenIO (
+      case resm of
+         Just rm -> getPath "stack" $ "path"
+            : maybe [] (\r -> ["--resolver", r]) rm ++ ["--global-pkg-db"]
+         _ -> getPath "ghc" ["--print-libdir"] <&> (</> "package.conf.d")
+      ) \path -> do
    log_ $ "Reading " <> path
    files <- liftIO $ listDirectory path
    let list = [ (Package pkg ver, file)
