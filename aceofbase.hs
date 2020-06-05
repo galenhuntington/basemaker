@@ -275,7 +275,7 @@ main = do
        verParser "latest" = Nothing
        verParser v = Just (Version v)
 
-   (packageSpec, preludeSpec, stackSpec, rebaseSpec, outFile)
+   (packageSpec, preludeSpec, stackSpec, rebaseSpec, outSpec)
          <- execParser $ flip info
       (fullDesc
          <> header "basemaker - because Haskell is just too easy"
@@ -320,6 +320,10 @@ main = do
                _ -> error $ "Could not get modules for " ++ pkg
             | (pkg, val) <- Map.toList st ]
          & over _2 (Set.delete "Prelude" . Set.fromList . concat)
+   let (outFile, target) =
+         if ".tar.gz" `isSuffixOf` outSpec
+         then (drop (length outSpec - 7) outSpec, outSpec)
+         else (outSpec, outSpec <> ".tar.gz")
    let myCabal = template
          (BL.pack $ takeFileName outFile)
          (BL.pack $ intercalate "," $ map showp pkgs)
@@ -331,7 +335,6 @@ main = do
          Just rv -> preludeFromRebase mods web rv
          Nothing -> BL.readFile "Prelude.hs"
    let tarEntry fn = Tar.fileEntry $ let Right x = Tar.toTarPath False fn in x
-   let target = outFile <> ".tar.gz"  -- TARget it?
    let tgz = compressWith defaultCompressParams { compressLevel = bestCompression }
          $ Tar.write
          [tarEntry "mybase.cabal" myCabal, tarEntry "Prelude.hs" myPrelude]
