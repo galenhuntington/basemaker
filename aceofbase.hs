@@ -339,13 +339,13 @@ main = do
          $ Tar.write
          [tarEntry "mybase.cabal" myCabal, tarEntry "Prelude.hs" myPrelude]
    let save = do
-         log_ $ "Generating " ++ target
          BL.writeFile target tgz
+         log_ $ "Generated " ++ target ++ "."
    handleJust (\e -> guard (isDoesNotExistError e) *> pure ()) (const save) do
       eq <- withFile target ReadMode \h ->
          BL.hGetContents h <&> (/= tgz) >>= evaluate
       if eq
          then putStrLn "Overwriting old tarball." *> save
-         else putStrLn "Tarball already exists and is up to date."
+         else putStrLn $ target ++ " already exists and is up to date."
    putStrLn $ "sha256: " <> show (sha256 tgz)
 
