@@ -61,8 +61,8 @@ as widely used, but fill a role in functional programming theory.
 5.  Lightweight.  Many packages aren’t as widely used, but are
 small dependencies.
 
-No package is going to meet all these, but one can score them and
-decide which make the cut.
+I don’t expect packages to meet all of these, but one can score
+them and decide which make the cut.
 
 Similarly, a prelude should contain a large set of basic functions
 such as `fromMaybe`, `ord`, `traverse`, `when`, and so on, that are
