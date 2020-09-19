@@ -238,8 +238,8 @@ inferFromHackage web = do
 inferFromStack :: WebS.Session -> Maybe String -> Inferrer ()
 inferFromStack web resolverm = do
    resolver <- liftIO $ flip (flip maybe pure) resolverm $
-      head <$> drop 1 <$> dropWhile (/="resolver:")
-           <$> words <$> readFile "stack.yaml"
+      (!! 1) . dropWhile (/="resolver:") . words
+         <$> readFile "stack.yaml"
    conf <- liftIO $ tryCache ("stack-" <> resolver <> ".conf") do
       getUrl web $ "https://www.stackage.org/snapshot/"
                   ++ resolver ++ "/cabal.config?global=true"
@@ -342,9 +342,9 @@ main = do
    let save = do
          BL.writeFile target tgz
          log_ $ "Generated " ++ target ++ "."
-   handleJust (\e -> guard (isDoesNotExistError e) *> pure ()) (const save) do
-      eq <- withFile target ReadMode \h ->
-         BL.hGetContents h <&> (/= tgz) >>= evaluate
+   handleJust (\e -> guard (isDoesNotExistError e) $> ()) (const save) do
+      eq <- withFile target ReadMode do
+         BL.hGetContents >=> (/= tgz) >>> evaluate
       if eq
          then putStrLn "Overwriting old tarball." *> save
          else putStrLn $ target ++ " already exists and is up to date."
