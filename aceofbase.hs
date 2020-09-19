@@ -103,7 +103,8 @@ isntDone _                          = True
 --  Not the fanciest parser in the world.
 cabalExposedModules :: Stream -> [Stream]
 cabalExposedModules
-   = takeWhile (\b -> isUpper (BL.head b) && ':' `BL.notElem` b)
+   = filter (\b -> isUpper (BL.head b) && ':' `BL.notElem` b)
+   . takeWhile (not . (":" `BL.isSuffixOf`))
    . drop 1
    . dropWhile
       (\w -> BL.length w /= 16 || BL.map toLower w /= "exposed-modules:")

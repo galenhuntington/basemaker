@@ -22,6 +22,7 @@ dependencies:
 - tar
 - wreq
 - zlib
+# TODO lens is pulled in transitively, so why bother?
 - microlens
 - microlens-th
 - SHA
