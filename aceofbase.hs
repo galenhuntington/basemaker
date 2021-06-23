@@ -110,6 +110,9 @@ cabalExposedModules
       (\w -> BL.length w /= 16 || BL.map toLower w /= "exposed-modules:")
    . filter (not . BL.null)
    . BL.splitWith (`elem` Set.fromList " \t\r\n,")
+   . BL.unlines
+   . filter (\x -> not $ "--" `BL.isPrefixOf` (BL.dropWhile isSpace x))
+   . BL.lines
 
 getCacheDir :: IO FilePath
 getCacheDir = getUserCacheDir "basemaker"
@@ -217,6 +220,7 @@ inferFromGhc resm = do
    for_ list \ (Package pkg ver, file) ->
       when (maybe False (maybe True (== PkInfo ver Nothing)) $ Map.lookup pkg st) do
          mods <- liftIO $ cabalExposedModules <$> BL.readFile (path </> file)
+         -- log_ $ show (path, file, mods)
          modify $ Map.insert pkg $ Just (PkInfo ver $ Just mods)
 
 inferFromHackage :: WebS.Session -> Inferrer ()
@@ -312,7 +316,7 @@ main = do
       inferFromGhc stackSpec
       inferFromHackage web
       when debug $ liftIO . traverse_
-         (log_ . show . (_2 . mapped %~ \ (PkInfo v m) -> (v, fmap length m)))
+         (log_ . show . (_2 . mapped %~ \ (PkInfo v m) -> (v, {- fmap length -} m)))
             . Map.toList =<< get
    let (pkgs, mods) =
          unzip [

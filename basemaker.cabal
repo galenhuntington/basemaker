@@ -1,13 +1,13 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 912110f7cddbc2df1c84c8db0b361d5875730f070ba0614459e9d428711c5f4e
+-- hash: 08c91e3da500d92d26173bcbbbf09bdf3b3c61b91519299743a45690c9c9c705
 
 name:           basemaker
-version:        0.3.2
+version:        0.4.0
 maintainer:     Galen Huntington
 license:        MIT
 license-file:   LICENSE
@@ -17,7 +17,12 @@ executable basemaker
   main-is: aceofbase.hs
   other-modules:
       Paths_basemaker
-  default-extensions: BlockArguments DerivingStrategies ScopedTypeVariables RecordWildCards PatternSynonyms
+  default-extensions:
+      BlockArguments
+      DerivingStrategies
+      ScopedTypeVariables
+      RecordWildCards
+      PatternSynonyms
   build-depends:
       SHA
     , base
