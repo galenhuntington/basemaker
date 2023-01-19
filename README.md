@@ -78,7 +78,7 @@ non-controversial APIs, which the community has obviously settled
 on”, and hosts a well-curated list of packages and prelude exports.
 So, for now I’m using it as a starting point.
 
-A derived project, [rerebase](https://github.com/nikita-volkov/rebase),
+A derived project, [rerebase](https://github.com/nikita-volkov/rerebase),
 re-exports modules from these packages with their original names.
 
 However, since the list of re-exports is fixed (or at least lags),
