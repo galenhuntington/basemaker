@@ -1,13 +1,13 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.4.
+-- This file has been generated from package.yaml by hpack version 0.35.1.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 08c91e3da500d92d26173bcbbbf09bdf3b3c61b91519299743a45690c9c9c705
+-- hash: 1cf21f4b31ed23cca17fbc910d6aa992c87754ec5a8f6a0215af94c9649b6924
 
 name:           basemaker
-version:        0.4.0
+version:        0.5.0
 maintainer:     Galen Huntington
 license:        MIT
 license-file:   LICENSE

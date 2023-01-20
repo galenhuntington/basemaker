@@ -342,7 +342,7 @@ main = do
    let tarEntry fn = Tar.fileEntry $ let Right x = Tar.toTarPath False fn in x
    let tgz = compressWith defaultCompressParams { compressLevel = bestCompression }
          $ Tar.write
-         [tarEntry "mybase.cabal" myCabal, tarEntry "Prelude.hs" myPrelude]
+         [tarEntry "a/mybase.cabal" myCabal, tarEntry "a/Prelude.hs" myPrelude]
    let save = do
          BL.writeFile target tgz
          log_ $ "Generated " ++ target ++ "."
