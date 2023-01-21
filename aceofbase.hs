@@ -280,14 +280,14 @@ main = do
        verParser "latest" = Nothing
        verParser v = Just (Version v)
 
-   (packageSpec, preludeSpec, stackSpec, rebaseSpec, outSpec)
+   (packageOpt, preludeOpt, stackOpt, rebaseOpt, outOpt, pinOpt)
          <- execParser $ flip info
       (fullDesc
          <> header "basemaker - because Haskell is just too easy"
          <> progDesc
             "Make your own Haskell prelude using deep learning and the blockchain."
          )
-      $ (<**> helper) $ pure (,,,,)
+      $ (<**> helper) $ pure (,,,,,)
          <*> optional (strOption (
             long "packages" <> metavar "LIST" <> showDefault
                <> help "List of packages to use, e.g., \"base==4.14.0.0,containers\"."))
@@ -306,14 +306,15 @@ main = do
          <*> strOption (
             short 'o' <> metavar "NAME" <> value "./mybase" <> showDefault
                <> help "Directory and name of generated package.")
+         <*> switch (short 'p' <> long "pin" <> help "Pin versions.")
 
    setUpCache
    web <- WebS.newSession
    st <- runInferrer do
-      inferInitialSet packageSpec
-      whenJust rebaseSpec $ inferSetFromRebase web
-      whenJust stackSpec $ inferFromStack web
-      inferFromGhc stackSpec
+      inferInitialSet packageOpt
+      whenJust rebaseOpt $ inferSetFromRebase web
+      whenJust stackOpt $ inferFromStack web
+      inferFromGhc stackOpt
       inferFromHackage web
       when debug $ liftIO . traverse_
          (log_ . show . (_2 . mapped %~ \ (PkInfo v m) -> (v, {- fmap length -} m)))
@@ -326,17 +327,18 @@ main = do
             | (pkg, val) <- Map.toList st ]
          & over _2 (Set.delete "Prelude" . Set.fromList . concat)
    let (outFile, target) =
-         if ".tar.gz" `isSuffixOf` outSpec
-         then (drop (length outSpec - 7) outSpec, outSpec)
-         else (outSpec, outSpec <> ".tar.gz")
+         if ".tar.gz" `isSuffixOf` outOpt
+         then (drop (length outOpt - 7) outOpt, outOpt)
+         else (outOpt, outOpt <> ".tar.gz")
    let myCabal = template
          (BL.pack $ takeFileName outFile)
          (BL.pack $ intercalate "," $ map showp pkgs)
          (BL.intercalate "," $ "Prelude.Base" : Set.toList mods)
-        where showp (Package pkg ver) = pkg ++ "==" ++ coerce ver
-   myPrelude <- case preludeSpec of
+        where showp (Package pkg ver)
+               = pkg ++ (guard pinOpt *> ("==" ++ coerce ver))
+   myPrelude <- case preludeOpt of
       Just f -> BL.readFile f
-      _  -> case rebaseSpec of
+      _  -> case rebaseOpt of
          Just rv -> preludeFromRebase mods web rv
          Nothing -> BL.readFile "Prelude.hs"
    let tarEntry fn = Tar.fileEntry $ let Right x = Tar.toTarPath False fn in x
