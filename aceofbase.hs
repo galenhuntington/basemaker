@@ -5,7 +5,7 @@ import Prelude hiding ((.), id)
 import Control.Monad
 import Control.Monad.IO.Class
 import Data.Char
-import Data.List
+import Data.List hiding (unzip)
 import Data.Maybe
 import Data.Foldable
 import Data.Coerce
