@@ -5,13 +5,13 @@ import Prelude hiding ((.), id)
 import Control.Monad
 import Control.Monad.IO.Class
 import Data.Char
-import Data.List hiding (unzip)
+import Data.List
 import Data.Maybe
 import Data.Foldable
 import Data.Coerce
 import Control.Exception
 import Control.Monad.Trans.State.Strict
-import Data.Functor
+import Data.Functor hiding (unzip)
 import Debug.Trace
 import Control.Category
 import System.IO
