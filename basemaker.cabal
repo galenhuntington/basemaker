@@ -1,13 +1,13 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.37.0.
+-- This file has been generated from package.yaml by hpack version 0.38.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f7efe490101e990d211715e91d24b76e0bb0c17a9b25f35685aa2fcff6d07ab0
+-- hash: 64f5be3e21c42007f090fc6416008614654155b15fdf1d5ac4a64fef9b074009
 
 name:           basemaker
-version:        0.6.2
+version:        0.7.0
 maintainer:     Galen Huntington
 license:        MIT
 license-file:   LICENSE
@@ -23,6 +23,7 @@ executable basemaker
       ScopedTypeVariables
       RecordWildCards
       PatternSynonyms
+  ghc-options: -Wno-x-partial
   build-depends:
       SHA
     , base
@@ -31,7 +32,6 @@ executable basemaker
     , directory
     , filepath
     , microlens
-    , microlens-th
     , optparse-applicative
     , process
     , tar

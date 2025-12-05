@@ -25,7 +25,6 @@ import qualified Codec.Archive.Tar.Entry as Tar
 import Codec.Compression.GZip
 import Data.Digest.Pure.SHA
 import Lens.Micro
--- import Lens.Micro.TH
 import System.Directory
 import System.Environment.XDG.BaseDir
 import System.FilePath
@@ -79,7 +78,7 @@ pattern PkInfo a b = (a, b)
 type Progress = Maybe PkInfo
 type ProgressMap = Map.Map String Progress
 
-debug = True
+debug = False
 
 log_ :: MonadIO m => String -> m ()
 log_ = when debug . traceM
@@ -277,9 +276,9 @@ preludeFromRebase mods web verm = do
          $ filter ("import" `BL.isPrefixOf`) $ BL.lines hs
       -- compactify...
       case imp of
-         "Prelude" : "as" : _ : rest
-               -> pure $ "import Prelude.Base as X " <> BL.unwords rest
          mod' : "as" : _ : rest
+            | mod' == "Prelude"
+               -> pure $ "import Prelude.Base as X " <> BL.unwords rest
             | "Rebase." `BL.isPrefixOf` mod'
             , mod <- BL.drop 7 mod'
             , mod `Set.member` mods -- particularly List1
@@ -287,8 +286,8 @@ preludeFromRebase mods web verm = do
          _     -> mempty
    where
       -- Rebase uses CPP to conditionally hide `unzip` in one place.
-      -- At worst we get a dodgy import if we always hide.  So we don't deal
-      -- with CPP, just take first of duplicates (as of now the right one).
+      -- At worst we get a dodgy import if we always hide, so we don't have to
+      -- parse CPP, just take first of duplicates (as of now the right one).
       dedupe = nubBy (\a b -> head a == head b)
 
 main = do
