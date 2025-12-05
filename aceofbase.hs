@@ -165,9 +165,10 @@ parsePackage s =
    where (pkg, rest) = break (=='=') s
 
 split :: Char -> String -> [String]
-split c [] = []
-split c s  = let (a, b) = break (==c) s in
-	a : split c (dropWhile isSpace $ drop 1 b)
+split c = go where
+   go [] = []
+   go s  = let (a, b) = break (==c) s in
+      a : split c (dropWhile isSpace $ drop 1 b)
 
 parsePackages :: String -> [(String, Maybe Version)]
 parsePackages = fmap parsePackage . split ',' <=< lines where
@@ -198,8 +199,8 @@ inferSetFromRebase web verm = do
 
 isVersionLike :: String -> Bool
 isVersionLike s =
-	all (\c -> isDigit c || c == '.') s && any (=='.') s
-		&& isDigit (head s) && isDigit (last s)
+   all (\c -> isDigit c || c == '.') s && any (=='.') s
+      && isDigit (head s) && isDigit (last s)
 
 --  Uses ghc (in path) to get built-in package versions & modules.
 --  Optional argument uses Stack to find built-in packages.
@@ -217,14 +218,14 @@ inferFromGhc resm = do
    let list = [ (Package pkg ver, file)
          | file <- files
          , ".conf" `isSuffixOf` file
-			, let file' = drop 5 $ reverse file
+         , let file' = drop 5 $ reverse file
          , ver':pkg':_ <- [dropWhile (not . isVersionLike) $ split '-' file']
          , let pkg = reverse pkg'
          , let ver = Version $ reverse ver'  -- such elegance
          ]
    log_ $ show list
-   -- log_ $ let ver:_ = [ ver | (Package "ghc" ver, _) <- list ]
-          -- in "Extracting from ghc-" ++ coerce ver
+   log_ $ let ver:_ = [ ver | (Package "ghc" ver, _) <- list ]
+          in "Extracting from ghc-" ++ coerce ver
    st <- get
    for_ list \ (Package pkg ver, file) ->
       when (maybe False (maybe True (== PkInfo ver Nothing)) $ Map.lookup pkg st) do
@@ -272,9 +273,10 @@ preludeFromRebase mods web verm = do
    hs <- (if isJust verm then tryCache ("prelude-" <> pstr <> ".hs") else id)
       $ getUrl web $ hackageRoot <> pstr </> "src/library/Rebase/Prelude.hs"
    pure $ BL.unlines $ "module Prelude (module X) where" : do
-      imp <- filter ("import" `BL.isPrefixOf`) $ BL.lines hs
+      imp <- dedupe $ map (drop 1 . BL.words)
+         $ filter ("import" `BL.isPrefixOf`) $ BL.lines hs
       -- compactify...
-      case drop 1 $ BL.words imp of
+      case imp of
          "Prelude" : "as" : _ : rest
                -> pure $ "import Prelude.Base as X " <> BL.unwords rest
          mod' : "as" : _ : rest
@@ -283,6 +285,11 @@ preludeFromRebase mods web verm = do
             , mod `Set.member` mods -- particularly List1
                -> pure $ "import " <> mod <> " as X " <> BL.unwords rest
          _     -> mempty
+   where
+      -- Rebase uses CPP to conditionally hide `unzip` in one place.
+		-- At worst we get a dodgy import if we always hide.  So we don't deal
+		-- with CPP, just take first of duplicates (as of now the right one).
+		dedupe = nubBy (\a b -> head a == head b)
 
 main = do
    let verParser :: String -> Maybe Version
