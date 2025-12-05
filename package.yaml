@@ -1,5 +1,5 @@
 name: basemaker
-version: 0.6.2
+version: 0.7.0
 maintainer: Galen Huntington
 license: MIT
 
@@ -13,6 +13,7 @@ default-extensions:
 executables:
   basemaker:
     main: aceofbase.hs
+    ghc-options: -Wno-x-partial
 
 dependencies:
 - base
@@ -24,7 +25,6 @@ dependencies:
 - zlib
 # TODO lens is pulled in transitively, so why bother?
 - microlens
-- microlens-th
 - SHA
 - xdg-basedir
 - directory

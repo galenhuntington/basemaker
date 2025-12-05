@@ -25,7 +25,6 @@ import qualified Codec.Archive.Tar.Entry as Tar
 import Codec.Compression.GZip
 import Data.Digest.Pure.SHA
 import Lens.Micro
--- import Lens.Micro.TH
 import System.Directory
 import System.Environment.XDG.BaseDir
 import System.FilePath
@@ -164,11 +163,14 @@ parsePackage s =
    (pkg, if null rest then Nothing else Just $ Version $ dropWhile (=='=') rest)
    where (pkg, rest) = break (=='=') s
 
+split :: Char -> String -> [String]
+split c = go where
+   go [] = []
+   go s  = let (a, b) = break (==c) s in
+      a : split c (dropWhile isSpace $ drop 1 b)
+
 parsePackages :: String -> [(String, Maybe Version)]
-parsePackages = fmap parsePackage . split <=< lines where
-   split [] = []
-   split s  = let (a, b) = break (==',') s
-              in a : split (dropWhile isSpace $ drop 1 b)
+parsePackages = fmap parsePackage . split ',' <=< lines where
 
 --  TODO custom filename
 inferInitialSet :: Maybe String -> Inferrer ()
@@ -194,6 +196,11 @@ inferSetFromRebase web verm = do
       when (d `Map.notMember` st) do
          modify $ Map.insert d Nothing
 
+isVersionLike :: String -> Bool
+isVersionLike s =
+   all (\c -> isDigit c || c == '.') s && any (=='.') s
+      && isDigit (head s) && isDigit (last s)
+
 --  Uses ghc (in path) to get built-in package versions & modules.
 --  Optional argument uses Stack to find built-in packages.
 inferFromGhc :: Maybe (Maybe String) -> Inferrer ()
@@ -209,11 +216,13 @@ inferFromGhc resm = do
    files <- liftIO $ listDirectory path
    let list = [ (Package pkg ver, file)
          | file <- files
-         , (ver', '-':pkg') <- [break (=='-') (reverse file)]
-         , "fnoc." `isPrefixOf` ver'
+         , ".conf" `isSuffixOf` file
+         , let file' = drop 5 $ reverse file
+         , ver':pkg':_ <- [dropWhile (not . isVersionLike) $ split '-' file']
          , let pkg = reverse pkg'
-         , let ver = Version $ reverse $ drop 5 ver'  -- such elegance
+         , let ver = Version $ reverse ver'  -- such elegance
          ]
+   log_ $ show list
    log_ $ let ver:_ = [ ver | (Package "ghc" ver, _) <- list ]
           in "Extracting from ghc-" ++ coerce ver
    st <- get
@@ -263,17 +272,23 @@ preludeFromRebase mods web verm = do
    hs <- (if isJust verm then tryCache ("prelude-" <> pstr <> ".hs") else id)
       $ getUrl web $ hackageRoot <> pstr </> "src/library/Rebase/Prelude.hs"
    pure $ BL.unlines $ "module Prelude (module X) where" : do
-      imp <- filter ("import" `BL.isPrefixOf`) $ BL.lines hs
+      imp <- dedupe $ map (drop 1 . BL.words)
+         $ filter ("import" `BL.isPrefixOf`) $ BL.lines hs
       -- compactify...
-      case drop 1 $ BL.words imp of
-         "Prelude" : "as" : _ : rest
-               -> pure $ "import Prelude.Base as X " <> BL.unwords rest
+      case imp of
          mod' : "as" : _ : rest
+            | mod' == "Prelude"
+               -> pure $ "import Prelude.Base as X " <> BL.unwords rest
             | "Rebase." `BL.isPrefixOf` mod'
             , mod <- BL.drop 7 mod'
             , mod `Set.member` mods -- particularly List1
                -> pure $ "import " <> mod <> " as X " <> BL.unwords rest
          _     -> mempty
+   where
+      -- Rebase uses CPP to conditionally hide `unzip` in one place.
+      -- At worst we get a dodgy import if we always hide, so we don't have to
+      -- parse CPP, just take first of duplicates (as of now the right one).
+      dedupe = nubBy (\a b -> head a == head b)
 
 main = do
    let verParser :: String -> Maybe Version
