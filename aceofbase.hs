@@ -79,7 +79,7 @@ pattern PkInfo a b = (a, b)
 type Progress = Maybe PkInfo
 type ProgressMap = Map.Map String Progress
 
-debug = False
+debug = True
 
 log_ :: MonadIO m => String -> m ()
 log_ = when debug . traceM
@@ -164,11 +164,13 @@ parsePackage s =
    (pkg, if null rest then Nothing else Just $ Version $ dropWhile (=='=') rest)
    where (pkg, rest) = break (=='=') s
 
+split :: Char -> String -> [String]
+split c [] = []
+split c s  = let (a, b) = break (==c) s in
+	a : split c (dropWhile isSpace $ drop 1 b)
+
 parsePackages :: String -> [(String, Maybe Version)]
-parsePackages = fmap parsePackage . split <=< lines where
-   split [] = []
-   split s  = let (a, b) = break (==',') s
-              in a : split (dropWhile isSpace $ drop 1 b)
+parsePackages = fmap parsePackage . split ',' <=< lines where
 
 --  TODO custom filename
 inferInitialSet :: Maybe String -> Inferrer ()
@@ -194,6 +196,11 @@ inferSetFromRebase web verm = do
       when (d `Map.notMember` st) do
          modify $ Map.insert d Nothing
 
+isVersionLike :: String -> Bool
+isVersionLike s =
+	all (\c -> isDigit c || c == '.') s && any (=='.') s
+		&& isDigit (head s) && isDigit (last s)
+
 --  Uses ghc (in path) to get built-in package versions & modules.
 --  Optional argument uses Stack to find built-in packages.
 inferFromGhc :: Maybe (Maybe String) -> Inferrer ()
@@ -209,13 +216,15 @@ inferFromGhc resm = do
    files <- liftIO $ listDirectory path
    let list = [ (Package pkg ver, file)
          | file <- files
-         , (ver', '-':pkg') <- [break (=='-') (reverse file)]
-         , "fnoc." `isPrefixOf` ver'
+         , ".conf" `isSuffixOf` file
+			, let file' = drop 5 $ reverse file
+         , ver':pkg':_ <- [dropWhile (not . isVersionLike) $ split '-' file']
          , let pkg = reverse pkg'
-         , let ver = Version $ reverse $ drop 5 ver'  -- such elegance
+         , let ver = Version $ reverse ver'  -- such elegance
          ]
-   log_ $ let ver:_ = [ ver | (Package "ghc" ver, _) <- list ]
-          in "Extracting from ghc-" ++ coerce ver
+   log_ $ show list
+   -- log_ $ let ver:_ = [ ver | (Package "ghc" ver, _) <- list ]
+          -- in "Extracting from ghc-" ++ coerce ver
    st <- get
    for_ list \ (Package pkg ver, file) ->
       when (maybe False (maybe True (== PkInfo ver Nothing)) $ Map.lookup pkg st) do
