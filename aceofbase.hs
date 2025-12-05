@@ -287,9 +287,9 @@ preludeFromRebase mods web verm = do
          _     -> mempty
    where
       -- Rebase uses CPP to conditionally hide `unzip` in one place.
-		-- At worst we get a dodgy import if we always hide.  So we don't deal
-		-- with CPP, just take first of duplicates (as of now the right one).
-		dedupe = nubBy (\a b -> head a == head b)
+      -- At worst we get a dodgy import if we always hide.  So we don't deal
+      -- with CPP, just take first of duplicates (as of now the right one).
+      dedupe = nubBy (\a b -> head a == head b)
 
 main = do
    let verParser :: String -> Maybe Version
