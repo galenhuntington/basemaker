@@ -218,8 +218,8 @@ inferFromGhc resm = do
          | file <- files
          , ".conf" `isSuffixOf` file
          , let file' = drop 5 $ reverse file
-         , ver':pkg':_ <- [dropWhile (not . isVersionLike) $ split '-' file']
-         , let pkg = reverse pkg'
+         , ver':pkgP <- [dropWhile (not . isVersionLike) $ split '-' file']
+         , let pkg = reverse $ concat $ intersperse "-" pkgP
          , let ver = Version $ reverse ver'  -- such elegance
          ]
    log_ $ show list
@@ -263,7 +263,9 @@ inferFromStack web resolverm = do
             | Map.lookup pkg st == Just Nothing
             , ver <- dropWhile (not.isDigit) ver'
             , not . null $ ver
-            -> modify $ Map.insert pkg $ Just $ PkInfo (Version ver) Nothing
+            -> do
+               log_ $ "Stack: " ++ pkg ++ " -> " ++ ver
+               modify $ Map.insert pkg $ Just $ PkInfo (Version ver) Nothing
          _  -> pure ()
 
 preludeFromRebase :: Set.Set Stream -> WebS.Session -> Maybe Version -> IO Stream
