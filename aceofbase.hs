@@ -89,7 +89,6 @@ template name pkgs mods =
    "cabal-version:2.0\nname:" <> name <> "\nbuild-type:Simple\nversion:0\n\
    \library\n default-language:Haskell2010\n exposed-modules:Prelude\n\
    \ build-depends:" <> pkgs <> "\n\
-   \ mixins:base(Prelude as Prelude.Base),base hiding(Prelude)\n\
    \ reexported-modules:" <> mods
       :: Stream
 
@@ -273,14 +272,14 @@ preludeFromRebase mods web verm = do
    let pstr = pkgString "rebase" verm
    hs <- (if isJust verm then tryCache ("prelude-" <> pstr <> ".hs") else id)
       $ getUrl web $ hackageRoot <> pstr </> "src/library/Rebase/Prelude.hs"
-   pure $ BL.unlines $ "module Prelude (module X) where" : do
+   pure $ BL.unlines $ "{-# LANGUAGE PackageImports #-}\nmodule Prelude (module X) where" : do
       imp <- dedupe $ map (drop 1 . BL.words)
          $ filter ("import" `BL.isPrefixOf`) $ BL.lines hs
       -- compactify...
       case imp of
          mod' : "as" : _ : rest
             | mod' == "Prelude"
-               -> pure $ "import Prelude.Base as X " <> BL.unwords rest
+               -> pure $ "import \"base\" Prelude as X " <> BL.unwords rest
             | "Rebase." `BL.isPrefixOf` mod'
             , mod <- BL.drop 7 mod'
             , mod `Set.member` mods -- particularly List1
@@ -350,7 +349,7 @@ main = do
    let myCabal = template
          (BL.pack $ takeFileName outFile)
          (BL.pack $ intercalate "," $ map showp pkgs)
-         (BL.intercalate "," $ "Prelude.Base" : Set.toList mods)
+         (BL.intercalate "," $ "base:Prelude as Prelude.Base" : Set.toList mods)
         where showp (Package pkg ver)
                = pkg ++ (guard pinOpt *> ("==" ++ coerce ver))
    myPrelude <- case preludeOpt of
