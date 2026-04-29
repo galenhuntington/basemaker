@@ -8,6 +8,9 @@ This _experimental_ tool offers that and more, providing an alternative
 `base` that is “batteries-included”, so you don’t need to add a
 long list of dependencies to access fundamental, established packages.
 
+I created this project in 2020.  In 2026, I removed my last use of it,
+so it is not likely to be maintained.
+
 
 ##  Overview
 
